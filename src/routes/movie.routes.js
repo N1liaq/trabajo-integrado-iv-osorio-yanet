@@ -5,12 +5,12 @@ import {
   createMovie,
   updateMovie,
   deleteMovie,
-} from "../controllers/movie.controllers";
+} from "../controllers/movie.controllers.js";
 
 const router = Router();
 
 router.get("/", getAllMovies);
-router.get("/:id", getAllMovieById);
+router.get("/:id", getMoviesId);
 router.post("/", createMovie);
 router.put("/:id", updateMovie);
 router.delete("/:id", deleteMovie);

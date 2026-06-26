@@ -1,15 +1,17 @@
-import Movie from "../models/movie.model.js";
+import { Movie } from "../models/movie.models.js";
 import { Op } from "sequelize";
 
+// ─── GET /api/movies ───────────────────────────────────────────────────────────
 export const getAllMovies = async (req, res) => {
   try {
-    const movies = await movie.findAll();
+    const movies = await Movie.findAll(); // 🔧 FIX: era "movie" (minúscula), debe ser "Movie"
     res.status(200).json(movies);
   } catch (error) {
     res.status(500).json({ error: "Error interno al obtener las películas." });
   }
 };
 
+// ─── GET /api/movies/:id ───────────────────────────────────────────────────────
 export const getMoviesId = async (req, res) => {
   try {
     const { id } = req.params;
@@ -27,49 +29,51 @@ export const getMoviesId = async (req, res) => {
   }
 };
 
+// ─── Función auxiliar de validación ───────────────────────────────────────────
+// 🔧 FIX: el "}" de cierre estaba después de "const currentYear",
+//         por eso todos los "if" y el "return null" quedaban fuera de la función.
+//         Ahora el cierre "}" está al final, después del return null.
 const validateMovieFields = (body) => {
   const { title, genre, duration, year, synopsis } = body;
   const currentYear = new Date().getFullYear();
-};
 
-if (!title || !genre || duration === undefined || year === undefined) {
-  return "Los campos title, genre, duration y year son obligatorios.";
-}
+  if (!title || !genre || duration === undefined || year === undefined) {
+    return "Los campos title, genre, duration y year son obligatorios.";
+  }
 
-if (typeof title !== "string" || title.trim() === "") {
-  return "El campo title debe ser una cadena de texto no vacía.";
-}
+  if (typeof title !== "string" || title.trim() === "") {
+    return "El campo title debe ser una cadena de texto no vacía.";
+  }
 
-if (typeof genre !== "string" || genre.trim() === "") {
-  return "El campo genre debe ser una cadena de texto no vacía.";
-}
+  if (typeof genre !== "string" || genre.trim() === "") {
+    return "El campo genre debe ser una cadena de texto no vacía.";
+  }
 
-if (!Number.isInteger(duration) || duration <= 0) {
-  return "El campo duration debe ser un número entero positivo mayor a cero. No se aceptan decimales, strings ni valores negativos.";
-}
+  if (!Number.isInteger(duration) || duration <= 0) {
+    return "El campo duration debe ser un número entero positivo mayor a cero. No se aceptan decimales, strings ni valores negativos.";
+  }
 
-if (!Number.isInteger(year) || year < 1888 || year > currentYear) {
-  return `El campo year debe ser un número entero entre 1888 y ${currentYear}. No se aceptan strings ni valores fuera de ese rango.`;
-}
+  if (!Number.isInteger(year) || year < 1888 || year > currentYear) {
+    return `El campo year debe ser un número entero entre 1888 y ${currentYear}. No se aceptan strings ni valores fuera de ese rango.`;
+  }
 
-if (synopsis !== undefined && typeof synopsis !== "string") {
-  return "El campo synopsis debe ser una cadena de texto.";
-}
+  if (synopsis !== undefined && typeof synopsis !== "string") {
+    return "El campo synopsis debe ser una cadena de texto.";
+  }
 
-return null;
+  return null;
+}; // ← el cierre de validateMovieFields va acá, después del return null
 
-// POST
+// ─── POST /api/movies ──────────────────────────────────────────────────────────
 export const createMovie = async (req, res) => {
   try {
     const { title, genre, duration, year, synopsis } = req.body;
 
-    // Validar campos
     const validationError = validateMovieFields(req.body);
     if (validationError) {
       return res.status(400).json({ error: validationError });
     }
 
-    // Verificar que el título sea único
     const existingMovie = await Movie.findOne({
       where: { title: title.trim() },
     });
@@ -93,14 +97,12 @@ export const createMovie = async (req, res) => {
   }
 };
 
-// PUT
-
+// ─── PUT /api/movies/:id ───────────────────────────────────────────────────────
 export const updateMovie = async (req, res) => {
   try {
     const { id } = req.params;
     const { title, genre, duration, year, synopsis } = req.body;
 
-    // Verificar que la película exista
     const movie = await Movie.findByPk(id);
     if (!movie) {
       return res
@@ -108,17 +110,15 @@ export const updateMovie = async (req, res) => {
         .json({ error: `No se encontró una película con el id ${id}.` });
     }
 
-    // Validar campos
     const validationError = validateMovieFields(req.body);
     if (validationError) {
       return res.status(400).json({ error: validationError });
     }
 
-    // Verificar unicidad del título (excluyendo la película actual)
     const existingMovie = await Movie.findOne({
       where: {
         title: title.trim(),
-        id: { [Op.ne]: id }, // Op.ne = "not equal"
+        id: { [Op.ne]: id },
       },
     });
     if (existingMovie) {
@@ -141,13 +141,11 @@ export const updateMovie = async (req, res) => {
   }
 };
 
-// DELETE
-
+// ─── DELETE /api/movies/:id ────────────────────────────────────────────────────
 export const deleteMovie = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Verificar que la película exista
     const movie = await Movie.findByPk(id);
     if (!movie) {
       return res
