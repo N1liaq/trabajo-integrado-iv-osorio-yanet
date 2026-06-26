@@ -27,7 +27,7 @@ export const getMoviesId = async (req, res) => {
   }
 };
 
-const validateMovie = (body) => {
+const validateMovieFields = (body) => {
   const { title, genre, duration, year, synopsis } = body;
   const currentYear = new Date().getFullYear();
 };
@@ -57,3 +57,38 @@ if (synopsis !== undefined && typeof synopsis !== "string") {
 }
 
 return null;
+
+// POST
+export const createMovie = async (req, res) => {
+  try {
+    const { title, genre, duration, year, synopsis } = req.body;
+
+    // Validar campos
+    const validationError = validateMovieFields(req.body);
+    if (validationError) {
+      return res.status(400).json({ error: validationError });
+    }
+
+    // Verificar que el título sea único
+    const existingMovie = await Movie.findOne({
+      where: { title: title.trim() },
+    });
+    if (existingMovie) {
+      return res.status(400).json({
+        error: `Ya existe una película registrada con el título "${title.trim()}".`,
+      });
+    }
+
+    const newMovie = await Movie.create({
+      title: title.trim(),
+      genre: genre.trim(),
+      duration,
+      year,
+      synopsis: synopsis ? synopsis.trim() : null,
+    });
+
+    res.status(201).json(newMovie);
+  } catch (error) {
+    res.status(500).json({ error: "Error interno al crear la película." });
+  }
+};
