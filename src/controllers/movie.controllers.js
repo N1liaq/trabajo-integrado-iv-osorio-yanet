@@ -92,3 +92,53 @@ export const createMovie = async (req, res) => {
     res.status(500).json({ error: "Error interno al crear la película." });
   }
 };
+
+// PUT
+
+export const updateMovie = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, genre, duration, year, synopsis } = req.body;
+
+    // Verificar que la película exista
+    const movie = await Movie.findByPk(id);
+    if (!movie) {
+      return res
+        .status(404)
+        .json({ error: `No se encontró una película con el id ${id}.` });
+    }
+
+    // Validar campos
+    const validationError = validateMovieFields(req.body);
+    if (validationError) {
+      return res.status(400).json({ error: validationError });
+    }
+
+    // Verificar unicidad del título (excluyendo la película actual)
+    const existingMovie = await Movie.findOne({
+      where: {
+        title: title.trim(),
+        id: { [Op.ne]: id }, // Op.ne = "not equal"
+      },
+    });
+    if (existingMovie) {
+      return res
+        .status(400)
+        .json({
+          error: `Ya existe una película registrada con el título "${title.trim()}".`,
+        });
+    }
+
+    await movie.update({
+      title: title.trim(),
+      genre: genre.trim(),
+      duration,
+      year,
+      synopsis: synopsis ? synopsis.trim() : null,
+    });
+
+    res.status(200).json(movie);
+  } catch (error) {
+    res.status(500).json({ error: "Error interno al actualizar la película." });
+  }
+};
