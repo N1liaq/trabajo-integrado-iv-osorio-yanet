@@ -122,11 +122,9 @@ export const updateMovie = async (req, res) => {
       },
     });
     if (existingMovie) {
-      return res
-        .status(400)
-        .json({
-          error: `Ya existe una película registrada con el título "${title.trim()}".`,
-        });
+      return res.status(400).json({
+        error: `Ya existe una película registrada con el título "${title.trim()}".`,
+      });
     }
 
     await movie.update({
@@ -140,5 +138,28 @@ export const updateMovie = async (req, res) => {
     res.status(200).json(movie);
   } catch (error) {
     res.status(500).json({ error: "Error interno al actualizar la película." });
+  }
+};
+
+// DELETE
+
+export const deleteMovie = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Verificar que la película exista
+    const movie = await Movie.findByPk(id);
+    if (!movie) {
+      return res
+        .status(404)
+        .json({ error: `No se encontró una película con el id ${id}.` });
+    }
+
+    await movie.destroy();
+    res
+      .status(200)
+      .json({ message: `Película con id ${id} eliminada correctamente.` });
+  } catch (error) {
+    res.status(500).json({ error: "Error interno al eliminar la película." });
   }
 };
